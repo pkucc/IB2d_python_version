@@ -425,6 +425,7 @@ def please_Update_Massive_Boundary_Velocity(dt_step,mass_info,mVelocity,\
 #
 ########################################################################
 
+@jit(nopython=True)
 def D(u,dz,string):
     ''' Finds centered 1st derivative in specified direction
     
@@ -477,6 +478,7 @@ def D(u,dz,string):
 #
 ########################################################################
 
+@jit(nopython=True)
 def DD(u,dz,string):
     ''' Finds centered 2nd derivative in z direction, specified by input & string
     

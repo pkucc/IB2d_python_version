@@ -41,6 +41,8 @@ from please_Plot_Results import please_Plot_Results
 from please_Compute_Normal_Tangential_Forces_On_Lag_Pts import \
     please_Compute_Normal_Tangential_Forces_On_Lag_Pts
 
+import time
+
 
 # IF BOUSSINESQ
 try:
@@ -694,9 +696,10 @@ def main(Fluid_Params,Grid_Params,Time_Params,Lag_Struct_Params,Output_Params,La
     # * * * * * * * * * * BEGIN TIME-STEPPING! * * * * * * * * * * *
     #
     #
-    
+
+    prev_ts = time.time()
     while current_time < T_FINAL:
-        
+
         #
         #
         #******Step 1: Update Position of Boundary of membrane at half time-step ******
@@ -854,9 +857,12 @@ def main(Fluid_Params,Grid_Params,Time_Params,Lag_Struct_Params,Output_Params,La
             print_vtk_files(Output_Params,ctsave,vort,uMag.T,p.T,U.T,V.T,Lx,Ly,Nx,Ny,\
                 lagPts,springs_Yes,connectsMat,tracers,concentration_Yes,C,Fxh.T,Fyh.T,F_Lag)
             
-            #Print Current Time
-            print('Current Time(s): {0:6.6f}\n'.format(current_time))
-            
+            # Print Current Time and actual time cost
+            now_ts = time.time()
+            print(f"Current Time(s): {current_time: 6.6f}, "
+                  f"actual time cost: {now_ts - prev_ts: .3f}s\n")
+            prev_ts = now_ts
+
             #Update print counter for filename index
             ctsave+=1
             firstPrint = 0

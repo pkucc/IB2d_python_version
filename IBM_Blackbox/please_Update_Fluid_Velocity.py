@@ -28,6 +28,7 @@
 import numpy as np
 from numpy import pi as PI
 from numpy import sin, cos
+from numba import jit
 try:
     import pyfftw
     # create global variables
@@ -41,6 +42,7 @@ except:
     print('Running without pyFFTW library.')
     FFTW = False
 from Supp import D, DD
+
 
 ################################################################################
 #
@@ -221,7 +223,6 @@ def please_Update_Fluid_Velocity(U, V, Fx, Fy, rho, mu, grid_Info, dt, idX, idY)
     return (U_h, V_h, U, V, p)
 
 
-
 ################################################################################
 #
 # FUNCTION: calculates the fluid velocity!
@@ -251,7 +252,6 @@ def give_Me_Fluid_Velocity(dt,rho,dj,Nx,Ny,rhs_VEL_hat,p_hat,A_hat,idMat,string)
         vel_hat = ifft_mat
     else:
         vel_hat = np.zeros((Ny,Nx),dtype='complex128') #initialize fluid velocity
-
 
     if string=='x':
         vel_hat[:,:] = ( rhs_VEL_hat - 1j*dt/(rho*dj)*sin(2*PI*idMat/Nx)*p_hat )/A_hat
@@ -365,6 +365,7 @@ def give_RHS_HALF_Step_Velocity(dt,rho,Nx,Ny,A,Ax,Ay,A_sq_j,AB_j,B,Fj,string):
 #
 ################################################################################
 
+@jit(nopython=True)
 def give_Fluid_Pressure(dt,rho,dx,dy,Nx,Ny,idX,idY,rhs_u_hat,rhs_v_hat):
     ''' Calculates the fluid pressure. Result is FFTW friendly if applicable.
     
@@ -381,20 +382,18 @@ def give_Fluid_Pressure(dt,rho,dx,dy,Nx,Ny,idX,idY,rhs_u_hat,rhs_v_hat):
         rhs_v_hat: 2D array of complex128
         
     Returns:
-        p_hat:'''
-
-    if FFTW:
-        p_hat = pyfftw.empty_aligned((Ny,Nx), dtype='complex128')
-    else:
-        p_hat = np.empty((Ny,Nx),dtype='complex128') #initialize fluid pressure
-    
-    num = -( 1j/dx*sin(2*PI*idX/Nx)*rhs_u_hat + 1j/dy*sin(2*PI*idY/Ny)*rhs_v_hat )
-    den = ( dt/rho*( (sin(2*PI*idX/Nx)/dx)**2 + (sin(2*PI*idY/Ny)/dy)**2 ) )
+        p_hat:
+    '''
+    sin_2_pi_idX_div_Nx = sin(2 * PI * idX / Nx)
+    sin_2_pi_idY_div_Ny = sin(2 * PI * idY / Ny)
+    num = -( 1j/dx*sin_2_pi_idX_div_Nx*rhs_u_hat + 1j/dy*sin_2_pi_idY_div_Ny*rhs_v_hat )
+    den = ( dt/rho*( (sin_2_pi_idX_div_Nx/dx)**2 + (sin_2_pi_idY_div_Ny/dy)**2 ) )
     
     # Deal with nan in [0,0] entry
-    num[0,0] = 0; den[0,0] = 1
+    num[0,0] = 0
+    den[0,0] = 1
     
-    p_hat[:,:] = num/den
+    p_hat = (num/den).astype("complex128")
 
     # Zero out modes.
     p_hat[0,0] = 0

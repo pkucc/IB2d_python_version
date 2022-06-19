@@ -191,6 +191,7 @@ def please_Find_Distances_Between_Cells(xC,yC,Ncells,threshold_radius,aggregate_
                        checkVec = agg_list2[inds_i]
                        if np.where(checkVec == j):
                             # do nothing, already a bond between them
+                           pass
                        else:
                             connectNewRow = np.array([i,j])
                             connects = np.vstack((connects,connectNewRow))
@@ -266,7 +267,7 @@ def please_Find_Closest_Lag_Pts_To_Cell_Centers(start_id,xC,yC,xLag,yLag,connect
 
 
     # Combine into one matrix
-    lag_indices_connects = concatenate((lag_indices_connects,RL_Vec),axis=1)
+    lag_indices_connects = np.concatenate((lag_indices_connects, RL_Vec), axis=1)
 
     return lag_indices_connects
 

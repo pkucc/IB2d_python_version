@@ -27,6 +27,7 @@
 
 from math import sqrt
 import numpy as np
+from numba import jit
 from Supp import give_1D_NonZero_Delta_Indices
 from Supp import give_Eulerian_Lagrangian_Distance, give_Delta_Kernel
 
@@ -446,6 +447,7 @@ def give_3_Element_Muscle_Force_Densities(Nb,xLag,yLag,xLag_P,yLag_P,muscles3,\
 #
 ###########################################################################
 
+@jit(nopython=True)
 def give_Me_Spring_Lagrangian_Force_Densities(ds,Nb,xLag,yLag,springs,Lx,Ly):
     ''' Computes the Lagrangian spring force densities
     
@@ -476,24 +478,26 @@ def give_Me_Spring_Lagrangian_Force_Densities(ds,Nb,xLag,yLag,springs,Lx,Ly):
 
         dx = xLag[id_Slave[ii]] - xLag[id_Master[ii]] # x-Distance btwn slave and master node
         dy = yLag[id_Slave[ii]] - yLag[id_Master[ii]] # y-Distance btwn slave and master node
+        dx_dy_norm = np.sqrt(dx ** 2 + dy ** 2)
     
         #
         # TESTING FOR LAG PT. PASSED THRU BNDRY; MAY NEED TO CHANGE TOLERANCE HERE, DEPENDENT ON APPLICATION
         #
         if np.abs(dx) > Lx/2:
-            dx = np.sign(dx)*( Lx - np.sign(dx)*dx )
+            dx = np.sign(dx)*( Lx - np.abs(dx) )
 
     
         if np.abs(dy) > Ly/2:
-            dy = np.sign(dy)*( Ly - np.sign(dy)*dy )
+            dy = np.sign(dy)*( Ly - np.abs(dy) )
 
         #Linear Springs
         #sF_x = 0.5 * (alpha+1.0) * K_Vec * (np.sqrt(dx**2 + dy**2)-RL_Vec) * (dx/np.sqrt(dx**2+dy**2))
         #sF_y = 0.5 * (alpha+1.0) * K_Vec * (np.sqrt(dx**2 + dy**2)-RL_Vec) * (dy/np.sqrt(dx**2+dy**2))
 
         #Handles both linear and non-linear springs
-        sF_x = 0.5 * (alpha[ii]+1.0) * K_Vec[ii] * np.power( (np.sqrt(dx**2 + dy**2)-RL_Vec[ii]), alpha[ii] ) * (dx/np.sqrt(dx**2+dy**2))
-        sF_y = 0.5 * (alpha[ii]+1.0) * K_Vec[ii] * np.power( (np.sqrt(dx**2 + dy**2)-RL_Vec[ii]), alpha[ii] ) * (dy/np.sqrt(dx**2+dy**2))
+        tmp = np.power( (dx_dy_norm-RL_Vec[ii]), alpha[ii] )
+        sF_x = 0.5 * (alpha[ii]+1.0) * K_Vec[ii] * tmp * (dx/dx_dy_norm)
+        sF_y = 0.5 * (alpha[ii]+1.0) * K_Vec[ii] * tmp * (dy/dx_dy_norm)
         
         fx[id_Master[ii]] += sF_x  # Sum total forces for node,
                         # i in x-direction (this is MASTER node for this spring)
