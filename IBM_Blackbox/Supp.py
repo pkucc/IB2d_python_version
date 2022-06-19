@@ -43,7 +43,7 @@
 
 import numpy as np
 from math import sqrt
-from numba import jit
+from numba import njit
     
 ################################################################################
 #
@@ -249,7 +249,7 @@ def give_Eulerian_Lagrangian_Distance(x, y, L):
 #
 ###########################################################################
 
-@jit(nopython=True)
+@njit(fastmath=True)
 def give_Delta_Kernel(x,dx):
     ''' Computes discrete approx. to 1D delta func over x in [x-2dx,x+2dx].
     
@@ -425,7 +425,7 @@ def please_Update_Massive_Boundary_Velocity(dt_step,mass_info,mVelocity,\
 #
 ########################################################################
 
-@jit(nopython=True)
+@njit(fastmath=True)
 def D(u,dz,string):
     ''' Finds centered 1st derivative in specified direction
     
@@ -478,7 +478,7 @@ def D(u,dz,string):
 #
 ########################################################################
 
-@jit(nopython=True)
+@njit(fastmath=True)
 def DD(u,dz,string):
     ''' Finds centered 2nd derivative in z direction, specified by input & string
     

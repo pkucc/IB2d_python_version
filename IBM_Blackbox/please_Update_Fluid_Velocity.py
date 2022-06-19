@@ -28,7 +28,7 @@
 import numpy as np
 from numpy import pi as PI
 from numpy import sin, cos
-from numba import jit
+from numba import njit, objmode
 try:
     import pyfftw
     # create global variables
@@ -229,6 +229,7 @@ def please_Update_Fluid_Velocity(U, V, Fx, Fy, rho, mu, grid_Info, dt, idX, idY)
 #
 ################################################################################
 
+@njit(fastmath=True, parallel=True)
 def give_Me_Fluid_Velocity(dt,rho,dj,Nx,Ny,rhs_VEL_hat,p_hat,A_hat,idMat,string):
     ''' Calculates the fluid velocity. Assigns result to FFTW plan if applicable.
 
@@ -247,11 +248,12 @@ def give_Me_Fluid_Velocity(dt,rho,dj,Nx,Ny,rhs_VEL_hat,p_hat,A_hat,idMat,string)
     Returns:
         vel_hat: fluid velocity'''
 
-    if FFTW:
-        global ifft_mat
-        vel_hat = ifft_mat
-    else:
-        vel_hat = np.zeros((Ny,Nx),dtype='complex128') #initialize fluid velocity
+    with objmode(vel_hat="c16[:,:]"):
+        if FFTW:
+            global ifft_mat
+            vel_hat = ifft_mat
+        else:
+            vel_hat = np.zeros((Ny,Nx),dtype='complex128') #initialize fluid velocity
 
     if string=='x':
         vel_hat[:,:] = ( rhs_VEL_hat - 1j*dt/(rho*dj)*sin(2*PI*idMat/Nx)*p_hat )/A_hat
@@ -365,7 +367,7 @@ def give_RHS_HALF_Step_Velocity(dt,rho,Nx,Ny,A,Ax,Ay,A_sq_j,AB_j,B,Fj,string):
 #
 ################################################################################
 
-@jit(nopython=True)
+@njit(fastmath=True, parallel=True)
 def give_Fluid_Pressure(dt,rho,dx,dy,Nx,Ny,idX,idY,rhs_u_hat,rhs_v_hat):
     ''' Calculates the fluid pressure. Result is FFTW friendly if applicable.
     
@@ -384,6 +386,12 @@ def give_Fluid_Pressure(dt,rho,dx,dy,Nx,Ny,idX,idY,rhs_u_hat,rhs_v_hat):
     Returns:
         p_hat:
     '''
+    with objmode(p_hat="c16[:,:]"):
+        if FFTW:
+            p_hat = pyfftw.empty_aligned((Ny,Nx), dtype='complex128')
+        else:
+            p_hat = np.empty((Ny,Nx),dtype='complex128')
+
     sin_2_pi_idX_div_Nx = sin(2 * PI * idX / Nx)
     sin_2_pi_idY_div_Ny = sin(2 * PI * idY / Ny)
     num = -( 1j/dx*sin_2_pi_idX_div_Nx*rhs_u_hat + 1j/dy*sin_2_pi_idY_div_Ny*rhs_v_hat )
@@ -392,8 +400,9 @@ def give_Fluid_Pressure(dt,rho,dx,dy,Nx,Ny,idX,idY,rhs_u_hat,rhs_v_hat):
     # Deal with nan in [0,0] entry
     num[0,0] = 0
     den[0,0] = 1
-    
-    p_hat = (num/den).astype("complex128")
+
+    # with objmode(p_hat=nb.complex128[:, :]):
+    p_hat[:, :] = num/den
 
     # Zero out modes.
     p_hat[0,0] = 0
