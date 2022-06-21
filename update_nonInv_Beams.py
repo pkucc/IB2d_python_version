@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import math
 def update_nonInv_Beams(dt,current_time,beams_info):
 
 # beams_info:   col 1: 1ST PT.
@@ -38,11 +39,11 @@ def update_nonInv_Beams(dt,current_time,beams_info):
         t1 = 0.1*tP1  
         t2 = 0.9*tP1
         if (t<t1): 							#For Polynomial Phase Interp.
-            g1 = a*power((t/tP1),2)
-        elif ((t>=t1)&&(t<t2)): 
-            g1 = c*power((t/tP1),3) + d*power((t/tP1),2) + g*(t/tP1) + h
+            g1 = a*math.pow((t/tP1),2)
+        elif t>=t1 and t<t2:
+            g1 = c*math.pow((t/tP1),3) + d*math.pow((t/tP1),2) + g*(t/tP1) + h
         elif (t>=t2):
-            g1 = -b*power(((t/tP1) - 1),2) + 1
+            g1 = -b*math.pow(((t/tP1) - 1),2) + 1
         xPts = xP1 + g1*( xP2 - xP1 )	
         yPts = yP1 + g1*( yP2 - yP1 )	
 		
@@ -52,11 +53,11 @@ def update_nonInv_Beams(dt,current_time,beams_info):
         t1 = 0.1*tP2 + tP1
         t2 = 0.9*tP2 + tP1
         if (t<t1):
-            g2 = a*power( ( (t-tprev)/tP2) ,2)
+            g2 = a*math.pow( ( (t-tprev)/tP2) ,2)
         elif t>=t1 and t<t2: 
-            g2 = c*power( ( (t-tprev)/tP2) ,3) + d*power( ((t-tprev)/tP2) ,2) + g*( (t-tprev)/tP2) + h
+            g2 = c*math.pow( ( (t-tprev)/tP2) ,3) + d*math.pow( ((t-tprev)/tP2) ,2) + g*( (t-tprev)/tP2) + h
         elif t>=t2: 
-            g2 = -b*power( (( (t-tprev)/tP2) - 1) ,2) + 1
+            g2 = -b*math.pow( (( (t-tprev)/tP2) - 1) ,2) + 1
         xPts = xP2 + g2*( xP1 - xP2 )
         yPts = yP2 + g2*( yP1 - yP2 )
     
@@ -67,21 +68,22 @@ def update_nonInv_Beams(dt,current_time,beams_info):
 #beams_info(:,4) = xPts(1:end-2)+xPts(3:end)-2*xPts(2:end-1);
 #beams_info(:,5) = yPts(1:end-2)+yPts(3:end)-2*yPts(2:end-1);
     n=len(xPts)
-    beams_info[:4] = xPts[:n-2] + xPts[3:] - 2*xPts[1:n-1]
-    beams_info[:5] = yPts[:n-2] + yPts[3:] - 2*yPts[1:n-1] 
+    #if n>1000:
+    xPts = np.array(xPts)
+    yPts = np.array(yPts)
+    beams_info = np.mat(beams_info)
+    #test_info = beams_info[:,4]
+    beams_info[:,4] = (xPts[:n-2] + xPts[2:] - 2 * xPts[1:n-1]).reshape(n-2,1)
 
+    beams_info[:,5] = (yPts[:n-2] + yPts[2:] - 2 * yPts[1:n-1]).reshape(n-2,1)
+
+
+    return beams_info
 
 def read_File_In(file_name):
     with open(file_name, 'r') as f:
-        lines = f.readlines()
-    x1=[]
-    y1=[]
-    y2=[]
-    for line in lines:
-        tmp=line.split()
-        x1.append(float(tmp[0]))
-        y1.append(float(tmp[1]))
-        y1.append(float(tmp[2]))
+        x1,y1,y2 = np.loadtxt(f,unpack=True)
+
     return np.array(x1), np.array(y1), np.array(y2)
 
 #filename = file_name;  %Name of file to read in
