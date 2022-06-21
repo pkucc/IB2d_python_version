@@ -129,7 +129,7 @@ def please_Initialize_Time_Inputs(Time_Input):
     #            (2): dt (time-step)
 
     # Initialize 
-    Time_Params = np.zeros(2)
+    Time_Params = np.zeros(4)
 
     try: 
         ind = Time_Input[0][:].index('Tfinal')
@@ -137,6 +137,12 @@ def please_Initialize_Time_Inputs(Time_Input):
     
         ind = Time_Input[0][:].index('dt')
         Time_Params[1] = Time_Input[1][ind] # MATLAB: Time_Input{find(strcmp({Time_Input{:,1}},'dt ')),2};
+
+        ind = Time_Input[0][:].index('Restart_Flag')
+        Time_Params[2] = Time_Input[1][ind]  # MATLAB: Time_Input{find(strcmp({Time_Input{:,1}},'Tfinal ')),2};
+
+        ind = Time_Input[0][:].index('ctsave')
+        Time_Params[3] = Time_Input[1][ind]  # MATLAB: Time_Input{find(strcmp({Time_Input{:,1}},'dt ')),2};
 
     except ValueError:
 
