@@ -6,16 +6,18 @@
 % FLUID PARAMETER VALUES %
 %
 Fluid_Parameters {
-mu = 10                % Dynamic Viscosity (N*s/m^2) 
-rho = 1000                 % Density (kg/m^2)
+mu = 10               % Dynamic Viscosity (N*s/m^2)
+rho = 1000                % Density (kg/m^2)
 }
 
 %
 % TEMPORAL INFORMATION %
 %
 Temporal_Information {
-Tfinal = 2            % Final time of simulation (s)
-dt = 2.5e-5             % Time-step (s)
+Tfinal = 3.001            % Final time of simulation (s)
+dt = 2.5e-4             % Time-step (s)
+Restart_Flag = 0
+ctsave = 39
 }
 
 %
@@ -38,8 +40,8 @@ update_springs = 0      % 0 (for no) or 1 (for yes)
 target_pts = 0          % 0 (for no) or 1 (for yes)
 update_target = 0       % 0 (for no) or 1 (for yes)
 beams = 0               % 0 (for no) or 1 (for yes)
-update_beams = 0        % 0 (for no) or 1 (for yes)
-nonInvariant_beams = 1        % 0 (for no) or 1 (for yes) % non-Invariant Beams，名称从nonInv_beams改回正确的nonInvariant_beams后炸了
+nonInvariant_beams = 1        % 0 (for no) or 1 (for yes)
+nonInv_beams = 1        % 0 (for no) or 1 (for yes) % non-Invariant Beams
 update_nonInv_beams = 1 % 0 (for no) or 1 (for yes) % update non-Invariant Beams
 FV_LT_muscle = 0        % 0 (for no) or 1 (for yes) % Force-Velocity & Length-Tension Model
 3_element_muscle = 0    % 0 (for no) or 1 (for yes) % Hill 3-Element Model w/ Force-Velocity & Length-Tension Model
@@ -61,7 +63,7 @@ user_force_model = 0    % 0 (for no) or 1 (for yes)
 % PRINTING INFORMATION
 %
 Output_Info {
-print_dump = 800          % How often to print (PLOT) to screen
+print_dump = 200          % How often to print (PLOT) to screen
 plot_Matlab = 0          % Plot in Matlab? (1=YES, 0=NO)
 plot_LagPts = 1          % Plot Lagrangian Points ONLY in Matlab
 plot_Velocity = 1        % Plot Lagrangian Points + VELOCITY FIELD in Matlab

@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 import math
-def update_nonInv_Beams(dt,current_time,beams_info):
+import os
+def update_nonInv_Beams(dt,current_time,beams_info,Restart_Flag):
 
 # beams_info:   col 1: 1ST PT.
 #               col 2: MIDDLE PT. (where force is exerted)
@@ -29,7 +30,7 @@ def update_nonInv_Beams(dt,current_time,beams_info):
     while t>=period:
        t -= period
 # Read In y_Pts for two Phases!
-    xP1,yP1,yP2 = read_File_In('swimmer.phases')  # NOTE xP1 = xP2 
+    xP1,yP1,yP2 = read_File_In('swimmer.phases',Restart_Flag)  # NOTE xP1 = xP2
     xP2 = xP1
 #
 # FIRST WE COMPUTE THE INTERPOLATE GEOMETRY BETWEEN BOTH PHASES
@@ -80,9 +81,18 @@ def update_nonInv_Beams(dt,current_time,beams_info):
 
     return beams_info
 
-def read_File_In(file_name):
-    with open(file_name, 'r') as f:
-        x1,y1,y2 = np.loadtxt(f,unpack=True)
+def read_File_In(file_name,Restart_Flag):
+    #path = os.getcwd()
+    #if Restart_Flag == 0:
+    try:
+        with open(file_name, 'r') as f:
+            x1,y1,y2 = np.loadtxt(f,unpack=True)
+    #else:
+    except:
+        path = os.path.abspath(os.pardir)
+
+        with open(os.path.join(path,file_name), 'r') as f:
+            x1,y1,y2 = np.loadtxt(f,unpack=True)
 
     return np.array(x1), np.array(y1), np.array(y2)
 
