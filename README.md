@@ -1,4 +1,8 @@
 # IB2d_python_version
-该算例每0.02s输出一次结果文件，单步是指0.02一步
+该算例中input2d里temporal_info的dt是计算时的一步的步长，下面还有一个print_dump代表每个多少个dt打印一次结果，
+实际效果就是每隔dt*print_dump时间打印结果，可调整
 在main2d.py里的add_path中，Blackbox所在的路径需要改到当前blackbox所在的路径
 运行： python main2d.py
+增加了重启选项
+在input2d的temporal_info 增加了Restart_Flag选项，1代表开启，0代表关闭，ctsave是重启位置，表示读取该步数的数据作为初始状态
+不要让它调用vtk写入结果，vtk写入的结果文件的数据排版格式很难读且 driver里vtk写入的代码很复杂
