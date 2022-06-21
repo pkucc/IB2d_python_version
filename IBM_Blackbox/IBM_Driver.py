@@ -176,6 +176,8 @@ def main(Fluid_Params,Grid_Params,Time_Params,Lag_Struct_Params,Output_Params,La
     # TEMPORAL INFORMATION VALUES STORED #
     T_FINAL = Time_Params[0]     # Final simulation time
     dt = Time_Params[1]          # Time-step
+    Restart_Flag = Time_Params[2]
+    ctsave = Time_Params[3]
     #NTime = floor[T_FINAL/dt]+1 # # of total time-steps [floor'd so exact number of time-steps]
     #dt = T_FINAL/NTime          # revised time-step [slightly perturbed dt, so exact # of time-steps are used]
     current_time = 0.0           # initialize start of simulation to time, 0 
@@ -329,7 +331,7 @@ def main(Fluid_Params,Grid_Params,Time_Params,Lag_Struct_Params,Output_Params,La
     # READ IN NON-INVARIANT BEAMS (IF THERE ARE NON-INVARIANT BEAMS) #
     if nonInv_beams_Yes:
         print('  - Beams ("Non-Invariant Beams") and ... ')
-        if update_Beams_Flag == 0:
+        if update_nonInv_Beams_Flag == 0:
             print('                    NOT dynamically updating beam properties\n')
         else:
             print('                    dynamically updating beam properties\n')
@@ -616,16 +618,8 @@ def main(Fluid_Params,Grid_Params,Time_Params,Lag_Struct_Params,Output_Params,La
         #Cyy = DD(C,dy,'y')
         #laplacian_C = Cxx+Cyy
         #C_0 = np.zeros(C.shape) # Define background concentration
-
-
-
     
-    # Initialize the initial velocities to zero.
-    U = np.zeros((Ny,Nx))                           # x-Eulerian grid velocity
-    V = np.zeros((Ny,Nx))                           # y-Eulerian grid velocity
-    U.shape
-    mVelocity = np.zeros((mass_info.shape[0],2))  # mass-Pt velocity 
-
+    
     if arb_ext_force_Yes:
         print('  -Artificial External Forcing Onto Fluid Grid\n')
         firstExtForce = 1       # initialize external forcing
@@ -633,11 +627,6 @@ def main(Fluid_Params,Grid_Params,Time_Params,Lag_Struct_Params,Output_Params,La
     
     # ACTUAL TIME-STEPPING IBM SCHEME! 
     #(flags for storing structure connects for printing and printing to .vtk)
-    cter = 0 
-    ctsave = 0 
-    firstPrint = 1 
-    loc = 1 
-    diffy = 1
     
     # CREATE VIZ_IB2D FOLDER, HIER_IB2D_DATA FOLDER FOR STORING .VTK DATA
     try:
@@ -675,22 +664,52 @@ def main(Fluid_Params,Grid_Params,Time_Params,Lag_Struct_Params,Output_Params,La
     
     #Initialize Vorticity, uMagnitude, and Pressure for initial colormap
     #Print initializations to .vtk
-    vort = np.zeros((Nx,Ny)) 
-    uMag = np.array(vort) 
-    p = np.array(vort)
-    lagPts = np.zeros((xLag.size,3))
-    lagPts[:,0] = xLag 
-    lagPts[:,1] = yLag
-    connectsMat,spacing = give_Me_Lag_Pt_Connects(ds,xLag,yLag,Nx,springs_Yes,springs_info)
-    Fxh = np.array(vort) 
-    Fyh =np.array(vort) 
-    F_Lag = np.zeros((xLag.size,2)) 
-    print_vtk_files(Output_Params,ctsave,vort,uMag,p,U,V,Lx,Ly,Nx,Ny,lagPts,springs_Yes,\
+    # Initialize the initial velocities to zero.
+    mVelocity = np.zeros((mass_info.shape[0], 2))  # mass-Pt velocity
+    firstPrint = 1
+    loc = 1
+    diffy = 1
+
+    if Restart_Flag == 0:
+        U = np.zeros((Ny, Nx))  # x-Eulerian grid velocity
+        V = np.zeros((Ny, Nx))  # y-Eulerian grid velocity
+    #U.shape
+        cter = 0
+        ctsave = 0
+
+        vort = np.zeros((Nx,Ny))
+        uMag = np.array(vort)
+        p = np.array(vort)
+        lagPts = np.zeros((xLag.size,3))
+        lagPts[:,0] = xLag
+        lagPts[:,1] = yLag
+        connectsMat,spacing = give_Me_Lag_Pt_Connects(ds,xLag,yLag,Nx,springs_Yes,springs_info)
+        Fxh = np.array(vort)
+        Fyh =np.array(vort)
+        F_Lag = np.zeros((xLag.size,2))
+        print_vtk_files(Output_Params,ctsave,vort,uMag,p,U,V,Lx,Ly,Nx,Ny,lagPts,springs_Yes,\
     connectsMat,tracers,concentration_Yes,C,Fxh,Fyh,F_Lag)
-    print('\n |****** Begin IMMERSED BOUNDARY SIMULATION! ******| \n\n')
-    print('Current Time(s): {0}\n'.format(current_time))
-    ctsave += 1
-    
+        print('\n |****** Begin IMMERSED BOUNDARY SIMULATION! ******| \n\n')
+        print('Current Time(s): {0}\n'.format(current_time))
+        ctsave += 1
+    else:
+        # xLag_P,yLag_P在前面初始化过了,就等于xLag,yLag
+        # 前面初始化了current_time=0
+        # 需要改结构,把help_Me_Restart也放在blackbox里,在读入时加入是否重启的参数,并读入ctsave
+        cter = ctsave * pDump  # Total  of time-steps thus far up to and included last data point saved
+        current_time = cter * dt  # Current time in simulation when last time-step was saved
+        ctsave = ctsave + 1  # Update for next ctsave number (always increases by 1 after data is saved)
+        current_time = current_time + dt  # Update for next time - step
+        cter = cter + 1  # Update for next time - step
+
+        from help_Me_Restart import help_Me_Restart
+        U, V, xLag, yLag, xLag_P, yLag_P = help_Me_Restart(ctsave)
+
+        connectsMat, spacing = give_Me_Lag_Pt_Connects(ds, xLag, yLag, Nx, springs_Yes, springs_info)
+
+        print('\n |****** Begin IMMERSED BOUNDARY SIMULATION! ******| \n\n')
+        print('Current Time(s): {0}\n'.format(current_time - dt))
+
     #
     #
     # * * * * * * * * * * BEGIN TIME-STEPPING! * * * * * * * * * * *
@@ -730,12 +749,13 @@ def main(Fluid_Params,Grid_Params,Time_Params,Lag_Struct_Params,Output_Params,La
         if update_nonInv_Beams_Flag and nonInv_beams_Yes:
             from update_nonInv_Beams import update_nonInv_Beams
             #This function is application specific, located with main2d
-            nonInv_beams_info = update_nonInv_Beams(dt,current_time,beams_info)    
+            nonInv_beams_info = update_nonInv_Beams(dt,current_time,nonInv_beams_info,Restart_Flag)
+            #print('current_time = ',current_time, 'nonInv_info_shape =', nonInv_beams_info.shape)
 
         if update_D_Springs_Flag and d_Springs_Yes:
             from update_Damped_Springs import update_Damped_Springs
             #This function is application specific, located with main2d
-            d_springs_info = update_Damped_Springs(dt,current_time,d_springs_info)    
+            d_springs_info = update_Damped_Springs(dt,current_time+dt,d_springs_info)
         
 
         #    
@@ -1572,7 +1592,7 @@ def give_String_Number_For_VTK(num):
         
     Returns:
         strNUM: string number for filename'''
-
+    num = int(num)
     if num < 10:
         strNUM = '000'+str(num)
     elif num < 100:
