@@ -3,6 +3,8 @@ import numpy as np
 import math
 import os
 def update_nonInv_Beams(dt,current_time,beams_info,Restart_Flag):
+kStiff = 20363359375.000004
+
 
 # beams_info:   col 1: 1ST PT.
 #               col 2: MIDDLE PT. (where force is exerted)
@@ -73,6 +75,9 @@ def update_nonInv_Beams(dt,current_time,beams_info,Restart_Flag):
     xPts = np.array(xPts)
     yPts = np.array(yPts)
     beams_info = np.mat(beams_info)
+
+    stiff_info = kStiff * np.ones(n-2)
+    beams_info[:,3] = stiff_info.reshape(n-2,1)
     #test_info = beams_info[:,4]
     beams_info[:,4] = (xPts[:n-2] + xPts[2:] - 2 * xPts[1:n-1]).reshape(n-2,1)
 

@@ -14,10 +14,10 @@ rho = 1000                % Density (kg/m^2)
 % TEMPORAL INFORMATION %
 %
 Temporal_Information {
-Tfinal = 3.001            % Final time of simulation (s)
+Tfinal = 2.001
 dt = 2.5e-4             % Time-step (s)
 Restart_Flag = 0
-ctsave = 39
+ctsave = 80 
 }
 
 %
@@ -63,7 +63,7 @@ user_force_model = 0    % 0 (for no) or 1 (for yes)
 % PRINTING INFORMATION
 %
 Output_Info {
-print_dump = 200          % How often to print (PLOT) to screen
+print_dump = 100          % How often to print (PLOT) to screen
 plot_Matlab = 0          % Plot in Matlab? (1=YES, 0=NO)
 plot_LagPts = 1          % Plot Lagrangian Points ONLY in Matlab
 plot_Velocity = 1        % Plot Lagrangian Points + VELOCITY FIELD in Matlab
